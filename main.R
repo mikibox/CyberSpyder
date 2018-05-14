@@ -13,5 +13,14 @@ df$BreachDate <- as.Date(df$BreachDate)
 df$AddedDate <- as.Date(df$AddedDate)
 summary(df)
 
+# Hackmagedon csv
+if (!file.exists("data/attacks2015.csv")){
+  fileUrl <- "http://www.hackmageddon.com/wp-content/uploads/2015/07/16-30-June-2015-Cyber-Attack-Timeline.csv"
+  download.file(url = fileUrl, destfile = "data/attacks2015.csv")
+}
+
+attacksdf <- read.csv(file = fileUrl,
+                      header = TRUE,
+                      sep = ";")
 # Basic first plot
 with(df, plot(BreachDate, PwnCount))
