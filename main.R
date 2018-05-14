@@ -35,8 +35,11 @@ attacksdf <- read.csv(file = "data/2017table.csv",
 # EXPLORING DATASETS
 #
 ##########################################################################
+head(df)
+unique(unlist(df$DataClasses))
+install.packages("lubridate")
 
-
+df$month <- lubridate::month(df$BreachDate)
 
 
 
@@ -46,4 +49,4 @@ attacksdf <- read.csv(file = "data/2017table.csv",
 #
 ##########################################################################
 # Basic first plot
-with(df, plot(BreachDate, PwnCount))
+with(df, plot(month, PwnCount))
