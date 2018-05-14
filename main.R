@@ -1,3 +1,8 @@
+##########################################################################
+#
+# READING DATASETS
+#
+##########################################################################
 # Download & Read Databreaches csv
 if (!file.exists("data/data.csv")){
   fileUrl <- "https://query.data.world/s/bropxfkodejrbsh3hkj3iw274pjc4o"
@@ -19,8 +24,26 @@ if (!file.exists("data/attacks2015.csv")){
   download.file(url = fileUrl, destfile = "data/attacks2015.csv")
 }
 
-attacksdf <- read.csv(file = fileUrl,
+
+attacksdf <- read.csv(file = "data/2017table.csv",
                       header = TRUE,
-                      sep = ";")
+                      sep = ",")
+
+
+##########################################################################
+#
+# EXPLORING DATASETS
+#
+##########################################################################
+
+
+
+
+
+##########################################################################
+#
+# VISUALIZING DATASETS
+#
+##########################################################################
 # Basic first plot
 with(df, plot(BreachDate, PwnCount))
