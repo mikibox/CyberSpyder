@@ -1,22 +1,28 @@
 ##########################################################################
 #
+# Intalling libraries
+#
+##########################################################################
+
+install.packages("tidyverse")
+
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(jsonlite)
+
+
+
+##########################################################################
+#
 # READING DATASETS
 #
 ##########################################################################
-# Download & Read Databreaches csv
-if (!file.exists("data/data.csv")){
-  fileUrl <- "https://query.data.world/s/bropxfkodejrbsh3hkj3iw274pjc4o"
-  download.file(url = fileUrl, destfile = "data/data.csv")
-} else {
-  print(TRUE)
-}
+options(stringsAsFactors = FALSE)
 
 # Read Databreaches json
-library(jsonlite)
-df <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb")
-df$BreachDate <- as.Date(df$BreachDate)
-df$AddedDate <- as.Date(df$AddedDate)
-summary(df)
+databreaches <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb")
+
 
 # Hackmagedon csv
 if (!file.exists("data/attacks2015.csv")){
@@ -32,14 +38,15 @@ attacksdf <- read.csv(file = "data/2017table.csv",
 
 ##########################################################################
 #
-# EXPLORING DATASETS
+# EXPLORING & TRANSFORMING DATASETS
 #
 ##########################################################################
-head(df)
-unique(unlist(df$DataClasses))
-install.packages("lubridate")
+head(databreaches)
+str(databreaches)
 
-df$month <- lubridate::month(df$BreachDate)
+databreaches$month <- month(databreaches$BreachDate)
+databreaches$julian <- yday(databreaches$BreachDate) 
+
 
 
 
