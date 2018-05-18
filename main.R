@@ -50,7 +50,7 @@ str(breaches)
 breaches$BreachDate <- as.Date(breaches$BreachDate)
 class(breaches$BreachDate)
 breaches$DATE <- breaches$BreachDate
-breaches <- separate(breaches, DATE, c('day', 'month', 'year'))
+breaches <- separate(breaches, DATE, c('year', 'month', 'day'))
 breaches$julian <- yday(breaches$BreachDate) 
 
 # group by month
@@ -68,11 +68,11 @@ breaches.groupedbymonth <- table(breaches$month)
 with(breaches, plot(month, PwnCount))
 
 # plot the data using ggplot2 and pipes
-boulder_daily_precip %>%
+breaches %>%
   na.omit() %>%
-  ggplot(aes(x = DATE, y = DAILY_PRECIP)) +
+  ggplot(aes(x = BreachDate, y = IsActive)) +
   geom_point(color = "darkorchid4") +
-  facet_wrap( ~ YEAR ) +
+  facet_wrap( ~ year ) +
   labs(title = "Precipitation - Boulder, Colorado",
        subtitle = "Use facets to plot by a variable - year in this case",
        y = "Daily precipitation (inches)",
