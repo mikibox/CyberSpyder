@@ -4,7 +4,7 @@
 #
 ##########################################################################
 
-install.packages("tidyverse")
+# install.packages("tidyverse")
 
 library(ggplot2)
 library(dplyr)
@@ -47,8 +47,11 @@ if (!file.exists("data/attacks2015.csv")){
 head(breaches)
 str(breaches)
 
+breaches$BreachDate <- as.Date(breaches$BreachDate)
+class(breaches$BreachDate)
+breaches$DATE <- breaches$BreachDate
+breaches <- separate(breaches, DATE, c('day', 'month', 'year'))
 breaches$julian <- yday(breaches$BreachDate) 
-breaches <- separate(breaches, BreachDate, c('day', 'month', 'year'))
 
 # group by month
 breaches.groupedbymonth <- table(breaches$month)
@@ -62,14 +65,17 @@ breaches.groupedbymonth <- table(breaches$month)
 #
 ##########################################################################
 # Basic first plot
-with(df, plot(month, PwnCount))
+with(breaches, plot(month, PwnCount))
 
 # plot the data using ggplot2 and pipes
-breaches %>%
-  ggplot(aes(x = julian, y = PwnCount)) +
+boulder_daily_precip %>%
+  na.omit() %>%
+  ggplot(aes(x = DATE, y = DAILY_PRECIP)) +
   geom_point(color = "darkorchid4") +
-  facet_wrap( ~ YEAR, ncol = 3) +
-  labs(title = "Daily Precipitation - Boulder, Colorado",
-       subtitle = "Data plotted by year",
-       y = "Daily Precipitation (inches)",
-       x = "Day of Year") + theme_bw(base_size = 15)
+  facet_wrap( ~ YEAR ) +
+  labs(title = "Precipitation - Boulder, Colorado",
+       subtitle = "Use facets to plot by a variable - year in this case",
+       y = "Daily precipitation (inches)",
+       x = "Date") + theme_bw(base_size = 15) +
+  # adjust the x axis breaks
+  scale_x_date(date_breaks = "5 years", date_labels = "%m-%Y")
