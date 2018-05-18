@@ -19,9 +19,13 @@ library(jsonlite)
 #
 ##########################################################################
 options(stringsAsFactors = FALSE)
+if (!dir.exists("data")){
+  dir.create("data")
+}
 
-# Read Databreaches json
-databreaches <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb")
+
+# Read breaches json
+breaches <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb")
 
 
 # Hackmagedon csv
@@ -31,9 +35,7 @@ if (!file.exists("data/attacks2015.csv")){
 }
 
 
-attacksdf <- read.csv(file = "data/2017table.csv",
-                      header = TRUE,
-                      sep = ",")
+# attacksdf <- read.csv(file = "data/2017table.csv", header = TRUE, sep = ",")
 
 
 ##########################################################################
@@ -41,11 +43,15 @@ attacksdf <- read.csv(file = "data/2017table.csv",
 # EXPLORING & TRANSFORMING DATASETS
 #
 ##########################################################################
-head(databreaches)
-str(databreaches)
+head(breaches)
+str(breaches)
 
-databreaches$month <- month(databreaches$BreachDate)
-databreaches$julian <- yday(databreaches$BreachDate) 
+breaches$month <- month(breaches$BreachDate)
+breaches$day <- day(breaches$BreachDate)
+breaches$julian <- yday(breaches$BreachDate) 
+
+# group by month
+breaches.groupedbymonth <- table(breaches$month)
 
 
 
@@ -57,3 +63,4 @@ databreaches$julian <- yday(databreaches$BreachDate)
 ##########################################################################
 # Basic first plot
 with(df, plot(month, PwnCount))
+
