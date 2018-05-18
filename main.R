@@ -51,7 +51,7 @@ breaches$BreachDate <- as.Date(breaches$BreachDate)
 class(breaches$BreachDate)
 breaches$DATE <- breaches$BreachDate
 breaches <- separate(breaches, DATE, c('year', 'month', 'day'))
-breaches$julian <- yday(breaches$BreachDate) 
+breaches$julianday <- yday(breaches$BreachDate) 
 
 # group by month
 breaches.groupedbymonth <- table(breaches$month)
@@ -70,12 +70,13 @@ with(breaches, plot(month, PwnCount))
 # plot the data using ggplot2 and pipes
 breaches %>%
   na.omit() %>%
-  ggplot(aes(x = BreachDate, y = IsActive)) +
+  ggplot(aes(x = julianday, y = PwnCount)) +
   geom_point(color = "darkorchid4") +
   facet_wrap( ~ year ) +
   labs(title = "Precipitation - Boulder, Colorado",
        subtitle = "Use facets to plot by a variable - year in this case",
        y = "Daily precipitation (inches)",
-       x = "Date") + theme_bw(base_size = 15) +
+       x = "Date") + theme_bw(base_size = 15)
+
   # adjust the x axis breaks
-  scale_x_date(date_breaks = "5 years", date_labels = "%m-%Y")
+  # scale_x_date(date_breaks = "5 years", date_labels = "%m-%Y")
