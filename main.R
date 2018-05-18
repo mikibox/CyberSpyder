@@ -10,6 +10,7 @@ library(ggplot2)
 library(dplyr)
 library(lubridate)
 library(jsonlite)
+library(tidyr)
 
 
 
@@ -46,9 +47,8 @@ if (!file.exists("data/attacks2015.csv")){
 head(breaches)
 str(breaches)
 
-breaches$month <- month(breaches$BreachDate)
-breaches$day <- day(breaches$BreachDate)
 breaches$julian <- yday(breaches$BreachDate) 
+breaches <- separate(breaches, BreachDate, c('day', 'month', 'year'))
 
 # group by month
 breaches.groupedbymonth <- table(breaches$month)
@@ -64,3 +64,12 @@ breaches.groupedbymonth <- table(breaches$month)
 # Basic first plot
 with(df, plot(month, PwnCount))
 
+# plot the data using ggplot2 and pipes
+breaches %>%
+  ggplot(aes(x = julian, y = PwnCount)) +
+  geom_point(color = "darkorchid4") +
+  facet_wrap( ~ YEAR, ncol = 3) +
+  labs(title = "Daily Precipitation - Boulder, Colorado",
+       subtitle = "Data plotted by year",
+       y = "Daily Precipitation (inches)",
+       x = "Day of Year") + theme_bw(base_size = 15)
