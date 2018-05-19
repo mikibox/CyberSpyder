@@ -37,6 +37,24 @@ attacksdf <- read.csv(file = "data/2017table.csv",
 ##########################################################################
 
 
+class(cves$published.datetime)
+cves$
+head(cves$published.datetime, n = 10)
+install.packages("lubridate")
+library("lubridate")
+
+
+
+dates <- as.Date(substr(cves$published.datetime,3,12))
+cves$months <- month(dates)
+head(cves$months)
+summary(cves$months)
+table <- aggregate(cbind(count = cves$cve) ~ mes,data = cves, FUN = NROW)
+##fechaDate <- as.POSIXct(cves$published.datetime[[1]],format="%Y-%m-%dT%H:%M:%OS")
+
+
+as.Date(cves$published.datetime, "%d%B%Y")
+
 
 
 
@@ -47,3 +65,4 @@ attacksdf <- read.csv(file = "data/2017table.csv",
 ##########################################################################
 # Basic first plot
 with(df, plot(BreachDate, PwnCount))
+
