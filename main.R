@@ -36,6 +36,8 @@ attacksdf <- read.csv(file = "data/2017table.csv",
 #
 ##########################################################################
 
+install.packages("net:security")
+library("net:security")
 
 class(cves$published.datetime)
 cves$
@@ -49,8 +51,30 @@ dates <- as.Date(substr(cves$published.datetime,3,12))
 cves$months <- month(dates)
 head(cves$months)
 summary(cves$months)
-table <- aggregate(cbind(count = cves$cve) ~ mes,data = cves, FUN = NROW)
+table <- aggregate(cbind(count = cves$cve) ~ cves$months,data = cves, FUN = NROW)
+
+names(table)[1] = 'Month'
+with(table, plot(table$count, table$cves$months))
+plot(table$count, type="o")
+#months vector assuming 1st month is Jan.
+mymonths <- c("Jan","Feb","Mar",
+              "Apr","May","Jun",
+              "Jul","Aug","Sep",
+              "Oct","Nov","Dec")
+#add abbreviated month name
+table$MonthNames <- mymonths[ table$Month ]
+plot(table$count, type="o")
+
 ##fechaDate <- as.POSIXct(cves$published.datetime[[1]],format="%Y-%m-%dT%H:%M:%OS")
+
+hist(as.Date(substr(cves$published.datetime,3,12)), "month")
+hist(as.Date(substr(cves$published.datetime,3,12)), "year")
+
+install.packages("ggplot2")
+library("ggplot2")
+install.packages("scales")
+library("scales")
+
 
 
 as.Date(cves$published.datetime, "%d%B%Y")
