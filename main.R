@@ -50,12 +50,11 @@ str(breaches)
 breaches$BreachDate <- as.Date(breaches$BreachDate)
 class(breaches$BreachDate)
 breaches$DATE <- breaches$BreachDate
-breaches <- separate(breaches, DATE, c('year', 'month', 'day'))
+breaches <- separate(breaches, DATE, c('YEAR', 'MONTH', 'DAY'))
 breaches$julianday <- yday(breaches$BreachDate) 
 
 # group by month
-breaches.groupedbymonth <- table(breaches$month)
-
+breachesbymonth <- breaches %>% group_by(MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(PwnCount)))
 
 
 
@@ -65,14 +64,14 @@ breaches.groupedbymonth <- table(breaches$month)
 #
 ##########################################################################
 # Basic first plot
-with(breaches, plot(month, PwnCount))
+with(breachesbymonth, plot(MONTH, COUNT, xlab="Months", ylab="number of attacks"))
 
 # plot the data using ggplot2 and pipes
-breaches %>%
+breachesbymonth %>%
   na.omit() %>%
-  ggplot(aes(x = julianday, y = PwnCount)) +
-  geom_point(color = "darkorchid4") +
-  facet_wrap( ~ year ) +
+  ggplot(aes(x = MONTH, y = COUNT)) +
+  geom_bar(stat = "identity", fill = "darkorchid4") +
+  facet_wrap( ~ YEAR ) +
   labs(title = "Precipitation - Boulder, Colorado",
        subtitle = "Use facets to plot by a variable - year in this case",
        y = "Daily precipitation (inches)",
