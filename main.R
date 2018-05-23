@@ -69,6 +69,7 @@ with(breachesbymonth, plot(MONTH, COUNT, xlab="Months", ylab="number of attacks"
 # plot the data using ggplot2 and pipes
 breachesbymonth %>%
   na.omit() %>%
+  filter(YEAR>2010) %>%
   ggplot(aes(x = MONTH, y = COUNT)) +
   geom_bar(stat = "identity", fill = "darkorchid4") +
   facet_wrap( ~ YEAR ) +
