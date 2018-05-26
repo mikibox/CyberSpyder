@@ -14,6 +14,7 @@ library(tidyr)
 
 
 
+
 ##########################################################################
 #
 # READING DATASETS
@@ -24,34 +25,38 @@ if (!dir.exists("data")){
   dir.create("data")
 }
 
+if (!file.exists("data/hackmaggedon2017.csv")){
+  print("Missing data files")
+}
+
 
 # Read breaches json
 breaches <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb")
 
 
 # Hackmagedon csv
-if (!file.exists("data/hackmaggedon2017.csv")){
-  print("Missing data files")
-}
-
-
 attacks2017 <- read.csv(file = "data/hackmaggedon2017.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 attacks2018 <- read.csv(file = "data/hackmaggedon2018.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 
+process_dates <- function(dataframe, datecolumn){
+  dataframe[,datecolumn] <- as.Date(dataframe[,datecolumn])
+  dataframe$DATE <- dataframe[,datecolumn]
+  dataframe <- separate(dataframe, DATE, c('YEAR', 'MONTH', 'DAY'))
+  dataframe$julianday <- yday(dataframe[,datecolumn]) 
+  dataframe
+}
 
 ##########################################################################
 #
 # EXPLORING & TRANSFORMING DATASETS
 #
 ##########################################################################
+
 head(breaches)
 str(breaches)
 
-breaches$BreachDate <- as.Date(breaches$BreachDate)
-class(breaches$BreachDate)
-breaches$DATE <- breaches$BreachDate
-breaches <- separate(breaches, DATE, c('YEAR', 'MONTH', 'DAY'))
-breaches$julianday <- yday(breaches$BreachDate) 
+breaches <- process_dates(breaches, "BreachDate")
+
 
 # group by month
 breachesbymonth <- breaches %>% group_by(MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(PwnCount)))
