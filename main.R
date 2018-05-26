@@ -30,13 +30,13 @@ breaches <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb"
 
 
 # Hackmagedon csv
-if (!file.exists("data/attacks2015.csv")){
-  fileUrl <- "http://www.hackmageddon.com/wp-content/uploads/2015/07/16-30-June-2015-Cyber-Attack-Timeline.csv"
-  download.file(url = fileUrl, destfile = "data/attacks2015.csv")
+if (!file.exists("data/hackmaggedon2017.csv")){
+  print("Missing data files")
 }
 
 
-# attacksdf <- read.csv(file = "data/2017table.csv", header = TRUE, sep = ",")
+attacks2017 <- read.csv(file = "data/hackmaggedon2017.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
+attacks2018 <- read.csv(file = "data/hackmaggedon2018.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 
 
 ##########################################################################
