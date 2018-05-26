@@ -55,8 +55,8 @@ cves <- netsec.data$datasets$cves
 # EXPLORING & TRANSFORMING DATASETS
 #
 ##########################################################################
-process_dates <- function(dataframe, datecolumn){
-  dataframe[,datecolumn] <- as.Date(dataframe[,datecolumn])
+process_dates <- function(dataframe, datecolumn, dateformat){
+  dataframe[,datecolumn] <- as.Date(dataframe[,datecolumn], dateformat)
   dataframe$DATE <- dataframe[,datecolumn]
   dataframe <- separate(dataframe, DATE, c('YEAR', 'MONTH', 'DAY'))
   dataframe$julianday <- yday(dataframe[,datecolumn]) 
@@ -66,8 +66,8 @@ process_dates <- function(dataframe, datecolumn){
 head(breaches)
 str(breaches)
 
-breaches <- process_dates(breaches, "BreachDate")
-
+breaches <- process_dates(breaches, "BreachDate", "%Y-%m-%d")
+attacks2018 <- process_dates(attacks2018, "Date", "%d/%m/%Y")
 
 # group by month
 breachesbymonth <- breaches %>% group_by(MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(PwnCount)))
