@@ -38,6 +38,21 @@ breaches <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb"
 attacks2017 <- read.csv(file = "data/hackmaggedon2017.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 attacks2018 <- read.csv(file = "data/hackmaggedon2018.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 
+# Get CVEs
+if (!file.exists("data/sysdata.rda")){
+  fileUrl <- "https://github.com/r-net-tools/security.datasets/raw/master/net.security/sysdata.rda"
+  download.file(url = fileUrl, destfile = "data/sysdata.rda")
+}
+load("data/sysdata.rda")
+cves <- netsec.data$datasets$cves
+
+
+
+##########################################################################
+#
+# EXPLORING & TRANSFORMING DATASETS
+#
+##########################################################################
 process_dates <- function(dataframe, datecolumn){
   dataframe[,datecolumn] <- as.Date(dataframe[,datecolumn])
   dataframe$DATE <- dataframe[,datecolumn]
@@ -45,12 +60,6 @@ process_dates <- function(dataframe, datecolumn){
   dataframe$julianday <- yday(dataframe[,datecolumn]) 
   dataframe
 }
-
-##########################################################################
-#
-# EXPLORING & TRANSFORMING DATASETS
-#
-##########################################################################
 
 head(breaches)
 str(breaches)
