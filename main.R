@@ -28,9 +28,11 @@ if (!dir.exists("data")){
 if (!file.exists("data/hackmaggedon2017.csv")){
   print("Missing data files")
 }
+if (!file.exists("data/hackmaggedon2018.csv")){
+  print("Missing data files")
+}
 
-
-# Read breaches json
+# breaches json
 breaches <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb")
 
 
@@ -38,7 +40,7 @@ breaches <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb"
 attacks2017 <- read.csv(file = "data/hackmaggedon2017.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 attacks2018 <- read.csv(file = "data/hackmaggedon2018.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 
-# Get CVEs
+# CVEs rda
 if (!file.exists("data/sysdata.rda")){
   fileUrl <- "https://github.com/r-net-tools/security.datasets/raw/master/net.security/sysdata.rda"
   download.file(url = fileUrl, destfile = "data/sysdata.rda")
