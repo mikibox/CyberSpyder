@@ -14,6 +14,7 @@ library(tidyr)
 
 
 
+
 ##########################################################################
 #
 # READING DATASETS
@@ -24,19 +25,29 @@ if (!dir.exists("data")){
   dir.create("data")
 }
 
+if (!file.exists("data/hackmaggedon2017.csv")){
+  print("Missing data files")
+}
+if (!file.exists("data/hackmaggedon2018.csv")){
+  print("Missing data files")
+}
 
-# Read breaches json
+# breaches json
 breaches <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb")
 
 
 # Hackmagedon csv
-if (!file.exists("data/attacks2015.csv")){
-  fileUrl <- "http://www.hackmageddon.com/wp-content/uploads/2015/07/16-30-June-2015-Cyber-Attack-Timeline.csv"
-  download.file(url = fileUrl, destfile = "data/attacks2015.csv")
+attacks2017 <- read.csv(file = "data/hackmaggedon2017.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
+attacks2018 <- read.csv(file = "data/hackmaggedon2018.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
+
+# CVEs rda
+if (!file.exists("data/sysdata.rda")){
+  fileUrl <- "https://github.com/r-net-tools/security.datasets/raw/master/net.security/sysdata.rda"
+  download.file(url = fileUrl, destfile = "data/sysdata.rda")
 }
+load("data/sysdata.rda")
+cves <- netsec.data$datasets$cves
 
-
-# attacksdf <- read.csv(file = "data/2017table.csv", header = TRUE, sep = ",")
 
 
 ##########################################################################
@@ -44,14 +55,19 @@ if (!file.exists("data/attacks2015.csv")){
 # EXPLORING & TRANSFORMING DATASETS
 #
 ##########################################################################
+process_dates <- function(dataframe, datecolumn, dateformat){
+  dataframe[,datecolumn] <- as.Date(dataframe[,datecolumn], dateformat)
+  dataframe$DATE <- dataframe[,datecolumn]
+  dataframe <- separate(dataframe, DATE, c('YEAR', 'MONTH', 'DAY'))
+  dataframe$julianday <- yday(dataframe[,datecolumn]) 
+  dataframe
+}
+
 head(breaches)
 str(breaches)
 
-breaches$BreachDate <- as.Date(breaches$BreachDate)
-class(breaches$BreachDate)
-breaches$DATE <- breaches$BreachDate
-breaches <- separate(breaches, DATE, c('YEAR', 'MONTH', 'DAY'))
-breaches$julianday <- yday(breaches$BreachDate) 
+breaches <- process_dates(breaches, "BreachDate", "%Y-%m-%d")
+attacks2018 <- process_dates(attacks2018, "Date", "%d/%m/%Y")
 
 # group by month
 breachesbymonth <- breaches %>% group_by(MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(PwnCount)))
@@ -69,6 +85,7 @@ with(breachesbymonth, plot(MONTH, COUNT, xlab="Months", ylab="number of attacks"
 # plot the data using ggplot2 and pipes
 breachesbymonth %>%
   na.omit() %>%
+  filter(YEAR>2010) %>%
   ggplot(aes(x = MONTH, y = COUNT)) +
   geom_bar(stat = "identity", fill = "darkorchid4") +
   facet_wrap( ~ YEAR ) +
