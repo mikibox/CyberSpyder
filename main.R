@@ -76,13 +76,8 @@ spyder <- process_dates(spyder, cves, "published.date", "%d/%m/%Y", "cves")
 
 
 # group by month and year
-breachesbymonth <- breaches %>% group_by(MONTH) %>% summarise(COUNT = sum(!is.na(MONTH)))
-attacks2017bymonth <- attacks2017 %>% group_by(MONTH) %>% summarise(COUNT = sum(!is.na(MONTH)))
-attacks2018bymonth <- attacks2018 %>% group_by(MONTH) %>% summarise(COUNT = sum(!is.na(MONTH)))
-
-breachesbymonthyear <- breaches %>% group_by(MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))
-attacks2017bymonthyear <- attacks2017 %>% group_by(MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))
-attacks2018bymonthyear <- attacks2018 %>% group_by(MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))
+spyderbymonth <- spyder %>% group_by(TYPE,MONTH) %>% summarise(COUNT = sum(!is.na(MONTH)))
+spyderbymonthyear <- spyder %>% group_by(TYPE,MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))
 
 
 
@@ -95,12 +90,12 @@ attacks2018bymonthyear <- attacks2018 %>% group_by(MONTH, YEAR) %>% summarise(CO
 with(breachesbymonth, plot(MONTH, COUNT, xlab="Months", ylab="number of attacks"))
 
 # plot the data using ggplot2 and pipes
-attacks2017bymonthyear %>%
+spyderbymonthyear %>%
   na.omit() %>%
-  filter(YEAR>2010) %>%
+  filter(YEAR>2000) %>%
   ggplot(aes(x = MONTH, y = COUNT)) +
   geom_bar(stat = "identity", fill = "darkorchid4") +
-  facet_wrap( ~ YEAR ) +
+  facet_wrap( ~ TYPE ) +
   labs(title = "Precipitation - Boulder, Colorado",
        subtitle = "Use facets to plot by a variable - year in this case",
        y = "Daily precipitation (inches)",
