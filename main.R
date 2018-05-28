@@ -63,14 +63,22 @@ process_dates <- function(dataframe, datecolumn, dateformat){
   dataframe
 }
 
-head(breaches)
-str(breaches)
+head(c(breaches, attacks2018))
+
 
 breaches <- process_dates(breaches, "BreachDate", "%Y-%m-%d")
 attacks2018 <- process_dates(attacks2018, "Date", "%d/%m/%Y")
+attacks2017 <- process_dates(attacks2017, "Date", "%d/%m/%Y")
 
-# group by month
-breachesbymonth <- breaches %>% group_by(MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(PwnCount)))
+
+# group by month and year
+breachesbymonth <- breaches %>% group_by(MONTH) %>% summarise(COUNT = sum(!is.na(MONTH)))
+attacks2017bymonth <- attacks2017 %>% group_by(MONTH) %>% summarise(COUNT = sum(!is.na(MONTH)))
+attacks2018bymonth <- attacks2018 %>% group_by(MONTH) %>% summarise(COUNT = sum(!is.na(MONTH)))
+
+breachesbymonthyear <- breaches %>% group_by(MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))
+attacks2017bymonthyear <- attacks2017 %>% group_by(MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))
+attacks2018bymonthyear <- attacks2018 %>% group_by(MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))
 
 
 
@@ -83,7 +91,7 @@ breachesbymonth <- breaches %>% group_by(MONTH, YEAR) %>% summarise(COUNT = sum(
 with(breachesbymonth, plot(MONTH, COUNT, xlab="Months", ylab="number of attacks"))
 
 # plot the data using ggplot2 and pipes
-breachesbymonth %>%
+attacks2017bymonthyear %>%
   na.omit() %>%
   filter(YEAR>2010) %>%
   ggplot(aes(x = MONTH, y = COUNT)) +
