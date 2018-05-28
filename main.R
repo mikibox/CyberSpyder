@@ -47,7 +47,7 @@ if (!file.exists("data/sysdata.rda")){
 }
 load("data/sysdata.rda")
 cves <- netsec.data$datasets$cves
-
+cves <- cves[1:100,]
 
 
 ##########################################################################
@@ -55,22 +55,29 @@ cves <- netsec.data$datasets$cves
 # EXPLORING & TRANSFORMING DATASETS
 #
 ##########################################################################
-process_dates <- function(dataframe, datecolumn, dateformat){
+process_dates <- function(datafinal, dataframe, datecolumn, dateformat, datatype){
+  
   dataframe[,datecolumn] <- as.Date(dataframe[,datecolumn], dateformat)
   dataframe$DATE <- dataframe[,datecolumn]
   dataframe <- separate(dataframe, DATE, c('YEAR', 'MONTH', 'DAY'))
   dataframe$julianday <- yday(dataframe[,datecolumn]) 
-  dataframe
+  dfresult <- select(dataframe, c('YEAR', 'MONTH', 'DAY', 'julianday'))
+  dfresult$TYPE <- datatype
+  datafinal <- bind_rows(datafinal,dfresult)
 }
 
-head(breaches)
-str(breaches)
+head(c(breaches, attacks2018))
 
-breaches <- process_dates(breaches, "BreachDate", "%Y-%m-%d")
-attacks2018 <- process_dates(attacks2018, "Date", "%d/%m/%Y")
+spyder <- data.frame(row.names = c('TYPE','YEAR', 'MONTH', 'DAY', 'julianday'))
+spyder <- process_dates(spyder, breaches, "BreachDate", "%Y-%m-%d", "breaches")
+spyder <- process_dates(spyder, attacks2018, "Date", "%d/%m/%Y", "attacks")
+spyder <- process_dates(spyder, attacks2017, "Date", "%d/%m/%Y", "attacks")
+spyder <- process_dates(spyder, cves, "published.date", "%d/%m/%Y", "cves")
 
-# group by month
-breachesbymonth <- breaches %>% group_by(MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(PwnCount)))
+
+# group by month and year
+spyderbymonth <- spyder %>% group_by(TYPE,MONTH) %>% summarise(COUNT = sum(!is.na(MONTH)))
+spyderbymonthyear <- spyder %>% group_by(TYPE,MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))
 
 
 
@@ -83,12 +90,12 @@ breachesbymonth <- breaches %>% group_by(MONTH, YEAR) %>% summarise(COUNT = sum(
 with(breachesbymonth, plot(MONTH, COUNT, xlab="Months", ylab="number of attacks"))
 
 # plot the data using ggplot2 and pipes
-breachesbymonth %>%
+spyderbymonthyear %>%
   na.omit() %>%
-  filter(YEAR>2010) %>%
+  filter(YEAR>2000) %>%
   ggplot(aes(x = MONTH, y = COUNT)) +
   geom_bar(stat = "identity", fill = "darkorchid4") +
-  facet_wrap( ~ YEAR ) +
+  facet_wrap( ~ TYPE ) +
   labs(title = "Precipitation - Boulder, Colorado",
        subtitle = "Use facets to plot by a variable - year in this case",
        y = "Daily precipitation (inches)",
