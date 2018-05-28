@@ -47,7 +47,7 @@ if (!file.exists("data/sysdata.rda")){
 }
 load("data/sysdata.rda")
 cves <- netsec.data$datasets$cves
-
+cves <- cves[1:100,]
 
 
 ##########################################################################
@@ -55,20 +55,24 @@ cves <- netsec.data$datasets$cves
 # EXPLORING & TRANSFORMING DATASETS
 #
 ##########################################################################
-process_dates <- function(dataframe, datecolumn, dateformat){
+process_dates <- function(datafinal, dataframe, datecolumn, dateformat, datatype){
+  
   dataframe[,datecolumn] <- as.Date(dataframe[,datecolumn], dateformat)
   dataframe$DATE <- dataframe[,datecolumn]
   dataframe <- separate(dataframe, DATE, c('YEAR', 'MONTH', 'DAY'))
   dataframe$julianday <- yday(dataframe[,datecolumn]) 
-  dataframe
+  dfresult <- select(dataframe, c('YEAR', 'MONTH', 'DAY', 'julianday'))
+  dfresult$TYPE <- datatype
+  datafinal <- bind_rows(datafinal,dfresult)
 }
 
 head(c(breaches, attacks2018))
 
-
-breaches <- process_dates(breaches, "BreachDate", "%Y-%m-%d")
-attacks2018 <- process_dates(attacks2018, "Date", "%d/%m/%Y")
-attacks2017 <- process_dates(attacks2017, "Date", "%d/%m/%Y")
+spyder <- data.frame(row.names = c('TYPE','YEAR', 'MONTH', 'DAY', 'julianday'))
+spyder <- process_dates(spyder, breaches, "BreachDate", "%Y-%m-%d", "breaches")
+spyder <- process_dates(spyder, attacks2018, "Date", "%d/%m/%Y", "attacks")
+spyder <- process_dates(spyder, attacks2017, "Date", "%d/%m/%Y", "attacks")
+spyder <- process_dates(spyder, cves, "published.date", "%d/%m/%Y", "cves")
 
 
 # group by month and year
