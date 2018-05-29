@@ -5,7 +5,8 @@
 ##########################################################################
 
 # install.packages("tidyverse")
-
+# install.packages("plotly")
+library(plotly)
 library(ggplot2)
 library(dplyr)
 library(lubridate)
@@ -74,14 +75,18 @@ spyder <- process_dates(spyder, attacks2018, "Date", "%d/%m/%Y", "attacks")
 spyder <- process_dates(spyder, attacks2017, "Date", "%d/%m/%Y", "attacks")
 spyder <- process_dates(spyder, cves, "published.date", "%d/%m/%Y", "cves")
 
+spyder <- drop_na(spyder)
+
 
 # group by month and year
-spyderbymonth <- spyder %>% group_by(TYPE, MONTH) %>% summarise(TOTAL = sum(!is.na(TYPE)))
+spyderTotals <- spyder %>% group_by(TYPE) %>% summarise(TOTAL = sum(!is.na(TYPE))) %>% rename(input_type = TYPE, input_total = TOTAL)
 
-spyderpercentages <- spyder %>%
-  group_by(TYPE) %>% 
-  mutate(per=paste0(round(!is.na(MONTH)/sum(!is.na(MONTH))*100, 2), "%"))
-#%>% group_by(MONTH) %>%  mutate(COUNT=paste0(round(100*COUNT/TOTAL,2),'%'))
+spyderbymonth <- 
+  spyder %>% 
+  group_by(TYPE, MONTH) %>% 
+  summarise(COUNT = sum(!is.na(TYPE)),
+            PER = COUNT / spyderTotals$input_total[spyderTotals$input_type == TYPE][1])
+
 spyderbymonthyear <- spyder %>% group_by(TYPE,MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))%>% mutate(PERCENTAGE = COUNT/sum(COUNT))
 
 
@@ -106,8 +111,8 @@ spyderbymonthyear %>%
        y = "Daily precipitation (inches)",
        x = "Date") + theme_bw(base_size = 15)
 
-  # adjust the x axis breaks
-  # scale_x_date(date_breaks = "5 years", date_labels = "%m-%Y")
+# adjust the x axis breaks
+# scale_x_date(date_breaks = "5 years", date_labels = "%m-%Y")
 
 library(plotly)
 
