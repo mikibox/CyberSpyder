@@ -48,7 +48,8 @@ if (!file.exists("data/sysdata.rda")){
 }
 load("data/sysdata.rda")
 cves <- netsec.data$datasets$cves
-cves <- cves[1:100,]
+# making a small sample of the cves
+# cves <- cves[1:100,]
 
 
 ##########################################################################
