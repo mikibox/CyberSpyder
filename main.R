@@ -30,39 +30,33 @@ installPackages <- function(packages){
 # READING DATASETS
 #
 ##########################################################################
-
-#' read project DataSets and load dataframes variables for working directory
-#' Datasets 
-readDataSets <- function(){
-  options(stringsAsFactors = FALSE)
-  if (!dir.exists("data")){
-    dir.create("data")
-  }
-  
-  if (!file.exists("data/hackmaggedon2017.csv")){
-    print("Missing data files")
-  }
-  if (!file.exists("data/hackmaggedon2018.csv")){
-    print("Missing data files")
-  }
-  
-  # breaches json
-  breaches <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb")
-  
-  # Hackmagedon csv
-  attacks2017 <- read.csv(file = "data/hackmaggedon2017.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
-  attacks2018 <- read.csv(file = "data/hackmaggedon2018.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
-  
-  # CVEs rda
-  if (!file.exists("data/sysdata.rda")){
-    fileUrl <- "https://github.com/r-net-tools/security.datasets/raw/master/net.security/sysdata.rda"
-    download.file(url = fileUrl, destfile = "data/sysdata.rda")
-  }
-  load("data/sysdata.rda")
-  cves <- netsec.data$datasets$cves
+options(stringsAsFactors = FALSE)
+if (!dir.exists("data")){
+  dir.create("data")
 }
 
-readDataSets()
+if (!file.exists("data/hackmaggedon2017.csv")){
+  print("Missing data files")
+}
+if (!file.exists("data/hackmaggedon2018.csv")){
+  print("Missing data files")
+}
+
+# breaches json
+breaches <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb")
+
+
+# Hackmagedon csv
+attacks2017 <- read.csv(file = "data/hackmaggedon2017.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
+attacks2018 <- read.csv(file = "data/hackmaggedon2018.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
+
+# CVEs rda
+if (!file.exists("data/sysdata.rda")){
+  fileUrl <- "https://github.com/r-net-tools/security.datasets/raw/master/net.security/sysdata.rda"
+  download.file(url = fileUrl, destfile = "data/sysdata.rda")
+}
+load("data/sysdata.rda")
+cves <- netsec.data$datasets$cves
 # making a small sample of the cves
 # cves <- cves[1:100,]
 
@@ -72,20 +66,6 @@ readDataSets()
 # EXPLORING & TRANSFORMING DATASETS
 #
 ##########################################################################
-#' Receives a dataframe with a date type column and split it adding 4 more
-#' columns YEAR,MONTH,DATE and JulianDay according to @dateformat. Adds also
-#' another column with text @datatype for row labeling or qualification.
-#' Finally adds this dataframe rows to @datafinal dataframe.
-#' @param datafinal final Dataframe to which new rows of @dataframe will be added
-#' @param dataframe new dataframe from which new columns will be extracted 
-#' and then its rows will be binded to @datafinal dataframe
-#' @param datecolumn Name of the date type column of @dataframe that will
-#' splitted
-#' @param dateformat Format for splitting date column.
-#' @param datatype Label text that will be added to each row of new dataframe
-#' @return New dataframe with @datafinal and @dataframe rows joined
-#' @example
-#' process_dates(spyder, breaches, "BreachDate", "%Y-%m-%d", "breaches")
 process_dates <- function(datafinal, dataframe, datecolumn, dateformat, datatype){
   
   dataframe[,datecolumn] <- as.Date(dataframe[,datecolumn], dateformat)
@@ -130,6 +110,22 @@ loadMainDataFrame <- function(){
   spyderbymonthspred <- spread(spyderbymonth[c("TYPE","MONTH","PER")], TYPE, PER)
 }
 
+spyder <- drop_na(spyder)
+
+
+# group by month and year
+spyderTotals <- spyder %>% group_by(TYPE) %>% summarise(TOTAL = sum(!is.na(TYPE))) %>% rename(input_type = TYPE, input_total = TOTAL)
+
+spyderbymonth <- 
+  spyder %>% 
+  group_by(TYPE, MONTH) %>% 
+  summarise(COUNT = sum(!is.na(TYPE)),
+            PER = COUNT / spyderTotals$input_total[spyderTotals$input_type == TYPE][1])
+
+spyderbymonth$PER <- lapply(spyderbymonth$PER, function(x) x*100)
+spyderbymonthyear <- spyder %>% group_by(TYPE,MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))%>% mutate(PERCENTAGE = COUNT/sum(COUNT))
+
+spyderbymonthspred <- spread(spyderbymonth[c("TYPE","MONTH","PER")], TYPE, PER)
 
 ##########################################################################
 #
