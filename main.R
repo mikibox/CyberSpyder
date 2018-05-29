@@ -76,8 +76,13 @@ spyder <- process_dates(spyder, cves, "published.date", "%d/%m/%Y", "cves")
 
 
 # group by month and year
-spyderbymonth <- spyder %>% group_by(TYPE,MONTH) %>% summarise(COUNT = sum(!is.na(MONTH)))
-spyderbymonthyear <- spyder %>% group_by(TYPE,MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))
+spyderbymonth <- spyder %>% group_by(TYPE, MONTH) %>% summarise(TOTAL = sum(!is.na(TYPE)))
+
+spyderpercentages <- spyder %>%
+  group_by(TYPE) %>% 
+  mutate(per=paste0(round(!is.na(MONTH)/sum(!is.na(MONTH))*100, 2), "%"))
+#%>% group_by(MONTH) %>%  mutate(COUNT=paste0(round(100*COUNT/TOTAL,2),'%'))
+spyderbymonthyear <- spyder %>% group_by(TYPE,MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))%>% mutate(PERCENTAGE = COUNT/sum(COUNT))
 
 
 
@@ -87,7 +92,7 @@ spyderbymonthyear <- spyder %>% group_by(TYPE,MONTH, YEAR) %>% summarise(COUNT =
 #
 ##########################################################################
 # Basic first plot
-with(breachesbymonth, plot(MONTH, COUNT, xlab="Months", ylab="number of attacks"))
+# with(breachesbymonth, plot(MONTH, COUNT, xlab="Months", ylab="number of attacks"))
 
 # plot the data using ggplot2 and pipes
 spyderbymonthyear %>%
