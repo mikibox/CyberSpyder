@@ -89,7 +89,7 @@ spyderbymonth <-
 
 spyderbymonthyear <- spyder %>% group_by(TYPE,MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))%>% mutate(PERCENTAGE = COUNT/sum(COUNT))
 
-
+spyderbymonthspred <- spread(spyderbymonth[c("TYPE","MONTH","PER")], TYPE, PER)
 
 ##########################################################################
 #
