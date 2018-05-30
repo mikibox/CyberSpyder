@@ -4,16 +4,25 @@
 #
 ##########################################################################
 
-# install.packages("tidyverse")
-# install.packages("plotly")
-library(plotly)
-library(ggplot2)
-library(dplyr)
-library(lubridate)
-library(jsonlite)
-library(tidyr)
+necessaryPackages <- c("bindrcpp", "plotly", "ggplot2", "dplyr", "lubridate", "jsonlite", "tidyr", "tidyverse")
 
+#' Install all necessary packages which are not yet installed
+#' @param packages a list of string
+#' @return  Print of the result of packages installation
+#' installPackages(c("plotly"))
+installPackages <- function(packages){
+  list.of.packages <- packages
+  new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+  if(length(new.packages)) install.packages(new.packages)
+  library(plotly)
+  library(ggplot2)
+  library(dplyr)
+  library(lubridate)
+  library(jsonlite)
+  library(tidyr)
+}
 
+# installPackages(necessaryPackages)
 
 
 ##########################################################################
@@ -21,33 +30,39 @@ library(tidyr)
 # READING DATASETS
 #
 ##########################################################################
-options(stringsAsFactors = FALSE)
-if (!dir.exists("data")){
-  dir.create("data")
+
+#' read project DataSets and load dataframes variables for working directory
+#' Datasets 
+readDataSets <- function(){
+  options(stringsAsFactors = FALSE)
+  if (!dir.exists("data")){
+    dir.create("data")
+  }
+  
+  if (!file.exists("data/hackmaggedon2017.csv")){
+    print("Missing data files")
+  }
+  if (!file.exists("data/hackmaggedon2018.csv")){
+    print("Missing data files")
+  }
+  
+  # breaches json
+  breaches <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb")
+  
+  # Hackmagedon csv
+  attacks2017 <- read.csv(file = "data/hackmaggedon2017.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
+  attacks2018 <- read.csv(file = "data/hackmaggedon2018.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
+  
+  # CVEs rda
+  if (!file.exists("data/sysdata.rda")){
+    fileUrl <- "https://github.com/r-net-tools/security.datasets/raw/master/net.security/sysdata.rda"
+    download.file(url = fileUrl, destfile = "data/sysdata.rda")
+  }
+  load("data/sysdata.rda")
+  cves <- netsec.data$datasets$cves
 }
 
-if (!file.exists("data/hackmaggedon2017.csv")){
-  print("Missing data files")
-}
-if (!file.exists("data/hackmaggedon2018.csv")){
-  print("Missing data files")
-}
-
-# breaches json
-breaches <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb")
-
-
-# Hackmagedon csv
-attacks2017 <- read.csv(file = "data/hackmaggedon2017.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
-attacks2018 <- read.csv(file = "data/hackmaggedon2018.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
-
-# CVEs rda
-if (!file.exists("data/sysdata.rda")){
-  fileUrl <- "https://github.com/r-net-tools/security.datasets/raw/master/net.security/sysdata.rda"
-  download.file(url = fileUrl, destfile = "data/sysdata.rda")
-}
-load("data/sysdata.rda")
-cves <- netsec.data$datasets$cves
+readDataSets()
 # making a small sample of the cves
 # cves <- cves[1:100,]
 
@@ -57,6 +72,20 @@ cves <- netsec.data$datasets$cves
 # EXPLORING & TRANSFORMING DATASETS
 #
 ##########################################################################
+#' Receives a dataframe with a date type column and split it adding 4 more
+#' columns YEAR,MONTH,DATE and JulianDay according to @dateformat. Adds also
+#' another column with text @datatype for row labeling or qualification.
+#' Finally adds this dataframe rows to @datafinal dataframe.
+#' @param datafinal final Dataframe to which new rows of @dataframe will be added
+#' @param dataframe new dataframe from which new columns will be extracted 
+#' and then its rows will be binded to @datafinal dataframe
+#' @param datecolumn Name of the date type column of @dataframe that will
+#' splitted
+#' @param dateformat Format for splitting date column.
+#' @param datatype Label text that will be added to each row of new dataframe
+#' @return New dataframe with @datafinal and @dataframe rows joined
+#' @example
+#' process_dates(spyder, breaches, "BreachDate", "%Y-%m-%d", "breaches")
 process_dates <- function(datafinal, dataframe, datecolumn, dateformat, datatype){
   
   dataframe[,datecolumn] <- as.Date(dataframe[,datecolumn], dateformat)
@@ -70,28 +99,37 @@ process_dates <- function(datafinal, dataframe, datecolumn, dateformat, datatype
 
 head(c(breaches, attacks2017))
 
-spyder <- data.frame(row.names = c('TYPE','YEAR', 'MONTH', 'DAY', 'julianday'))
-spyder <- process_dates(spyder, breaches, "BreachDate", "%Y-%m-%d", "breaches")
-# spyder <- process_dates(spyder, attacks2018, "Date", "%d/%m/%Y", "attacks")
-spyder <- process_dates(spyder, attacks2017, "Date", "%d/%m/%Y", "attacks")
-spyder <- process_dates(spyder, cves, "published.date", "%d/%m/%Y", "cves")
+#' Loads project's main dataframe with all datasets configured for the project.
+#' This maindataframe normalizes all datasets rows' counts of different types.
+#' in a Percentage column named "PER" which represents the percentage of rows 
+#' of same type in a particular month of the year.
+#' Relevant Variables:
+#' -spyderbymonthyear: all datasets percentage by each month and year.
+#' -spyderbymonthspred: all datasets percentages by each month of the year normalized
+#' with label qualification
+#' -spyderTotals: total count of each dataset occurances
+loadMainDataFrame <- function(){
+  spyder <- data.frame(row.names = c('TYPE','YEAR', 'MONTH', 'DAY', 'julianday'))
+  spyder <- process_dates(spyder, breaches, "BreachDate", "%Y-%m-%d", "breaches")
+  
+  # spyder <- process_dates(spyder, attacks2018, "Date", "%d/%m/%Y", "attacks")
+  spyder <- process_dates(spyder, attacks2017, "Date", "%d/%m/%Y", "attacks")
+  spyder <- process_dates(spyder, cves, "published.date", "%d/%m/%Y", "cves")
+  spyder <- drop_na(spyder)
+  
+  # group by month and year
+  spyderTotals <- spyder %>% group_by(TYPE) %>%
+    summarise(TOTAL = sum(!is.na(TYPE))) %>% rename(input_type = TYPE, input_total = TOTAL)
+  spyderbymonth <- 
+    spyder %>% 
+    group_by(TYPE, MONTH) %>% 
+    summarise(COUNT = sum(!is.na(TYPE)),
+              PER = COUNT / spyderTotals$input_total[spyderTotals$input_type == TYPE][1])
+  spyderbymonth$PER <- lapply(spyderbymonth$PER, function(x) x*100)
+  spyderbymonthyear <- spyder %>% group_by(TYPE,MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))%>% mutate(PERCENTAGE = COUNT/sum(COUNT))
+  spyderbymonthspred <- spread(spyderbymonth[c("TYPE","MONTH","PER")], TYPE, PER)
+}
 
-spyder <- drop_na(spyder)
-
-
-# group by month and year
-spyderTotals <- spyder %>% group_by(TYPE) %>% summarise(TOTAL = sum(!is.na(TYPE))) %>% rename(input_type = TYPE, input_total = TOTAL)
-
-spyderbymonth <- 
-  spyder %>% 
-  group_by(TYPE, MONTH) %>% 
-  summarise(COUNT = sum(!is.na(TYPE)),
-            PER = COUNT / spyderTotals$input_total[spyderTotals$input_type == TYPE][1])
-
-spyderbymonth$PER <- lapply(spyderbymonth$PER, function(x) x*100)
-spyderbymonthyear <- spyder %>% group_by(TYPE,MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))%>% mutate(PERCENTAGE = COUNT/sum(COUNT))
-
-spyderbymonthspred <- spread(spyderbymonth[c("TYPE","MONTH","PER")], TYPE, PER)
 
 ##########################################################################
 #
