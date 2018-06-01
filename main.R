@@ -22,7 +22,7 @@ installPackages <- function(packages){
   library(tidyr)
 }
 
-# installPackages(necessaryPackages)
+installPackages(necessaryPackages)
 
 
 ##########################################################################
@@ -147,7 +147,7 @@ spyderbymonthyear %>%
        y = "Daily precipitation (inches)",
        x = "Date") + theme_bw(base_size = 15)
 
-
+month <- c('January', 'February', 'March', 'April', 'May', 'June', 'July','August', 'September', 'October', 'November', 'December')
 spyderbymonthspred$month <- month
 spyderbymonthspred$month <- factor(spyderbymonthspred$month, levels = spyderbymonthspred[["month"]])
 plot_ly(spyderbymonthspred, x = ~month, 
