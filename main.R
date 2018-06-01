@@ -14,6 +14,9 @@ installPackages <- function(packages){
   list.of.packages <- packages
   new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
   if(length(new.packages)) install.packages(new.packages)
+}
+
+loadPackages <- function(){
   library(plotly)
   library(ggplot2)
   library(dplyr)
@@ -22,8 +25,8 @@ installPackages <- function(packages){
   library(tidyr)
 }
 
-installPackages(necessaryPackages)
-
+# installPackages(necessaryPackages)
+loadPackages()
 
 ##########################################################################
 #
