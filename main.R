@@ -61,7 +61,7 @@ if (!file.exists("data/sysdata.rda")){
 load("data/sysdata.rda")
 cves <- netsec.data$datasets$cves
 # making a small sample of the cves
-cves <- cves[1:100,]
+# cves <- cves[1:100,]
 
 
 ##########################################################################
@@ -108,6 +108,42 @@ spyder.byyear <- spyder.main %>% group_by(TYPE,MONTH, YEAR) %>%
 # VISUALIZING DATASETS
 #
 ##########################################################################
+# Plot 2017 and 2018 attacks and cves
+months <- c('January', 'February', 'March', 'April', 'May', 'June', 'July','August', 'September', 'October', 'November', 'December')
+
+spyder.getTotals <- function(custom_filter){
+  df <- spyder.main %>% 
+    filter(YEAR %in% custom_filter) %>%
+    group_by(TYPE) %>%
+    summarise(TOTAL = sum(!is.na(TYPE))) %>% rename(input_type = TYPE, input_total = TOTAL)
+}
+
+spyder.plots.AttacksCvesByYear <- function(myYear){
+  myYear <- c(2017)
+  tmptotals <- spyder.getTotals(myYear)
+  tmpdf <- spyder.main %>%
+    filter(YEAR %in% myYear) %>%
+    group_by(TYPE, MONTH) %>% 
+    summarise(COUNT = sum(!is.na(TYPE)),
+              PER = (COUNT / tmptotals$input_total[tmptotals$input_type == TYPE][1])*100)
+  tmpdf <- spread(tmpdf[c("TYPE","MONTH","PER")],TYPE, PER)
+  sum(tmpdf$attacks)
+  
+  tmpdf$month <- months
+  tmpdf$month <- factor(tmpdf$month, levels = tmpdf[["month"]])
+  p <- plot_ly(tmpdf,  mode = 'lines') %>%
+    layout(title = "Attacks vs. CVEs 2017",
+           xaxis = list(title = "Months"),
+           yaxis = list (title = "Percentage (%)"))
+  
+  p<-add_trace(p, x= ~month, y = ~attacks, name = 'attacks', line = list(color = 'rgb(22,255,13)', width = 4))
+  p<-add_trace(p, x= ~month, y = ~cves, name = 'cves', line = list(color = 'rgb(0,148,255)', width = 4))
+  p
+}
+
+spyder.plots.AttacksCvesByYear(c(2017))
+
+
 # Basic first plot
 # with(breachesbymonth, plot(MONTH, COUNT, xlab="Months", ylab="number of attacks"))
 
