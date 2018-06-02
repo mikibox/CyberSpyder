@@ -156,9 +156,6 @@ spyder.plots.ByYear(c(2012, 2013,2014, 2015, 2016, 2017))
 spyder.plots.ByYear(c(2017))
 
 
-# Basic first plot
-# with(breachesbymonth, plot(MONTH, COUNT, xlab="Months", ylab="number of attacks"))
-
 # plot the data using ggplot2 and pipes
 spyder.byyear %>%
   na.omit() %>%
