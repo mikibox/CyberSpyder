@@ -80,66 +80,83 @@ process_dates <- function(datafinal, dataframe, datecolumn, dateformat, datatype
   datafinal <- bind_rows(datafinal,dfresult)
 }
 
-head(c(breaches, attacks2017))
+# TODO explore the datasets
 
-#' Loads project's main dataframe with all datasets configured for the project.
-#' This maindataframe normalizes all datasets rows' counts of different types.
-#' in a Percentage column named "PER" which represents the percentage of rows 
-#' of same type in a particular month of the year.
-#' Relevant Variables:
-#' -spyderbymonthyear: all datasets percentage by each month and year.
-#' -spyderbymonthspred: all datasets percentages by each month of the year normalized
-#' with label qualification
-#' -spyderTotals: total count of each dataset occurances
-loadMainDataFrame <- function(){
-  spyder <- data.frame(row.names = c('TYPE','YEAR', 'MONTH', 'DAY', 'julianday'))
-  spyder <- process_dates(spyder, breaches, "BreachDate", "%Y-%m-%d", "breaches")
+get_spyder_df <- function(){
+  spyder.main <- data.frame(row.names = c('TYPE','YEAR', 'MONTH', 'DAY', 'julianday'))
+  spyder.main <- process_dates(spyder.main, breaches, "BreachDate", "%Y-%m-%d", "breaches")
+  spyder.main <- process_dates(spyder.main, attacks2018, "Date", "%d/%m/%Y", "attacks")
+  spyder.main <- process_dates(spyder.main, attacks2017, "Date", "%d/%m/%Y", "attacks")
+  spyder.main <- process_dates(spyder.main, cves, "published.date", "%d/%m/%Y", "cves")
+  spyder.main <- drop_na(spyder.main)
   
-  # spyder <- process_dates(spyder, attacks2018, "Date", "%d/%m/%Y", "attacks")
-  spyder <- process_dates(spyder, attacks2017, "Date", "%d/%m/%Y", "attacks")
-  spyder <- process_dates(spyder, cves, "published.date", "%d/%m/%Y", "cves")
-  spyder <- drop_na(spyder)
-  
-  # group by month and year
-  spyderTotals <- spyder %>% group_by(TYPE) %>%
+  # get totals
+  spyder.totals <- spyder.main %>% group_by(TYPE) %>%
     summarise(TOTAL = sum(!is.na(TYPE))) %>% rename(input_type = TYPE, input_total = TOTAL)
-  spyderbymonth <- 
-    spyder %>% 
-    group_by(TYPE, MONTH) %>% 
+  
+  # group by month
+  spyder.bymonth <- spyder.main %>% group_by(TYPE, MONTH) %>% 
     summarise(COUNT = sum(!is.na(TYPE)),
-              PER = COUNT / spyderTotals$input_total[spyderTotals$input_type == TYPE][1])
-  spyderbymonth$PER <- lapply(spyderbymonth$PER, function(x) x*100)
-  spyderbymonthyear <- spyder %>% group_by(TYPE,MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))%>% mutate(PERCENTAGE = COUNT/sum(COUNT))
-  spyderbymonthspred <- spread(spyderbymonth[c("TYPE","MONTH","PER")], TYPE, PER)
+              PER = (COUNT / spyder.totals$input_total[spyder.totals$input_type == TYPE][1])*100)
+  
+  # spread month
+  spyder.spreadmonth <- spread(spyder.bymonth[c("TYPE","MONTH","PER")], TYPE, PER)
+  
+  # group by year
+  spyder.byyear <- spyder.main %>% group_by(TYPE,MONTH, YEAR) %>% 
+    summarise(COUNT = sum(!is.na(MONTH)))
+  
+  #return
+  spyder
 }
 
-spyder <- drop_na(spyder)
+spyder <- get_spyder_df()
 
-
-# group by month and year
-spyderTotals <- spyder %>% group_by(TYPE) %>% summarise(TOTAL = sum(!is.na(TYPE))) %>% rename(input_type = TYPE, input_total = TOTAL)
-
-spyderbymonth <- 
-  spyder %>% 
-  group_by(TYPE, MONTH) %>% 
-  summarise(COUNT = sum(!is.na(TYPE)),
-            PER = COUNT / spyderTotals$input_total[spyderTotals$input_type == TYPE][1])
-
-spyderbymonth$PER <- lapply(spyderbymonth$PER, function(x) x*100)
-spyderbymonthyear <- spyder %>% group_by(TYPE,MONTH, YEAR) %>% summarise(COUNT = sum(!is.na(MONTH)))%>% mutate(PERCENTAGE = COUNT/sum(COUNT))
-
-spyderbymonthspred <- spread(spyderbymonth[c("TYPE","MONTH","PER")], TYPE, PER)
 
 ##########################################################################
 #
 # VISUALIZING DATASETS
 #
 ##########################################################################
+# Plot 2017 and 2018 attacks and cves
+months <- c('January', 'February', 'March', 'April', 'May', 'June', 'July','August', 'September', 'October', 'November', 'December')
+
+spyder.getTotals <- function(custom_filter){
+  df <- spyder.main %>% 
+    filter(YEAR %in% custom_filter) %>%
+    group_by(TYPE) %>%
+    summarise(TOTAL = sum(!is.na(TYPE))) %>% rename(input_type = TYPE, input_total = TOTAL)
+}
+
+spyder.plots.AttacksCvesByYear <- function(myYear){
+  tmptotals <- spyder.getTotals(myYear)
+  tmpdf <- spyder.main %>%
+    filter(YEAR %in% myYear) %>%
+    group_by(TYPE, MONTH) %>% 
+    summarise(COUNT = sum(!is.na(TYPE)),
+              PER = (COUNT / tmptotals$input_total[tmptotals$input_type == TYPE][1])*100)
+  tmpdf <- spread(tmpdf[c("TYPE","MONTH","PER")],TYPE, PER)
+  sum(tmpdf$attacks)
+  
+  tmpdf$month <- months
+  tmpdf$month <- factor(tmpdf$month, levels = tmpdf[["month"]])
+  p <- plot_ly(tmpdf,  mode = 'lines') %>%
+    layout(title = "Attacks vs. CVEs 2017",
+           xaxis = list(title = "Months"),
+           yaxis = list (title = "Percentage (%)"))
+  p<-add_lines(p, x= ~month, y = ~attacks, name = 'attacks', line = list(color = 'rgb(22,255,13)', width = 4))
+  p<-add_lines(p, x= ~month, y = ~cves, name = 'cves', line = list(color = 'rgb(0,148,255)', width = 4))
+  p
+}
+
+spyder.plots.AttacksCvesByYear(c(2017))
+
+
 # Basic first plot
 # with(breachesbymonth, plot(MONTH, COUNT, xlab="Months", ylab="number of attacks"))
 
 # plot the data using ggplot2 and pipes
-spyderbymonthyear %>%
+spyder.byyear %>%
   na.omit() %>%
   filter(YEAR>2000) %>%
   ggplot(aes(x = MONTH, y = COUNT)) +
@@ -150,13 +167,13 @@ spyderbymonthyear %>%
        y = "Daily precipitation (inches)",
        x = "Date") + theme_bw(base_size = 15)
 
-month <- c('January', 'February', 'March', 'April', 'May', 'June', 'July','August', 'September', 'October', 'November', 'December')
-spyderbymonthspred$month <- month
-spyderbymonthspred$month <- factor(spyderbymonthspred$month, levels = spyderbymonthspred[["month"]])
-plot_ly(spyderbymonthspred, x = ~month, 
+spyder.spreadmonth$month <- c('January', 'February', 'March', 'April', 'May', 'June', 'July','August', 'September', 'October', 'November', 'December')
+spyder.spreadmonth$month <- factor(spyder.spreadmonth$month, levels = spyder.spreadmonth[["month"]])
+plot_ly(spyder.spreadmonth, x = ~month, 
         y = ~attacks, name = 'attacks', type = 'scatter', mode = 'lines', line = list(color = 'rgb(22,255,13)', width = 4)) %>%
   add_trace(y = ~cves, name = 'cves', line = list(color = 'rgb(0,148,255)', width = 4)) %>%
   add_trace(y = ~breaches, name = 'breaches', line = list(color = 'rgb(255,56,0)', width = 4, dash = 'line')) %>%
   layout(title = "Percentage of incidents by month",
          xaxis = list(title = "Months"),
          yaxis = list (title = "Percentage (%)"))
+
