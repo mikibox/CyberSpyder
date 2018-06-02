@@ -7,13 +7,14 @@
 ##########################################################################
 # PAQUETES
 
+
 library(rworldmap)
 
 
 # Hackmagedon csvnetse
 geo2017.csv <- read.csv("https://docs.google.com/spreadsheets/d/14-PLnKlHDvL4eZQFuf0qy2fTA-2OuVsRk_t25PrX4eY/export?format=csv",sep = ",")
 i<-1
-j-1
+j<-1
 a<-0
 
 #Valores de las tablas antes de ser modificados 
@@ -40,7 +41,7 @@ for (i in 1:length(geo2017.csv$Country)) {
 }
 
 # AGREGAR DATOS AL PAQUETE rworldmap 
-
+t1<-table(geo2017.csv$Country)
 laTabla = data.frame(t1)
 laTabla$Incidentes<-laTabla$Freq
 sPDF <- joinCountryData2Map(dF = laTabla,
@@ -49,3 +50,7 @@ sPDF <- joinCountryData2Map(dF = laTabla,
                             verbose = T)
 # plot the spatialDataFrame
 mapCountryData(sPDF, nameColumnToPlot = "Incidentes")
+
+
+
+
