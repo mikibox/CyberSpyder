@@ -1,0 +1,40 @@
+---
+title: "Informe ¿En que época del año se es más vulnerable a un ataque informático?"
+author: "Daniel Malvarez, Miquel Fairman, Carolina Recalde"
+date: "08 de junio 2018"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introducción
+
+Un ataque informático es uno de los eventos mas preocupantes que puede surgir en un entorno empresarial, por ello el área de seguridad de una empresa debe estar al corriente tanto de los posibles parches como incidentes se han suscitado en otras compañías o servicios atacados.
+
+Es inverosímil creer que un ataque se llevara a cabo en un lugar y hora exacta de acuerdo a un estándar predeterminado, pero si se puede tener una estadística que muestre cuando estar mas al pendiente de cualquier posible incidente.
+
+En la actualidad, gracias a varias organizaciones se preocupan por recoger datos y publicarlos, podemos ver una tendencia, no solo en cuanto a ataques informáticos sino también a cve´s (common vulnerabilities and exposures) y breaches, esto lo han hecho a través de los años y nos proporcionan datos que pueden ser de mucha utilidad para determinar cierto patrón que utilizan los hackers para atacar.
+
+## Desarrollo 
+
+Para la elaboración de este documento se han tomado bases de datos de diferentes páginas web, a priori se ha obtenido información de cve´s, breaches e incidentes que se han reportado en el transcurso de los años, en diferentes fuentes de información, esto ha ayudado a realizar los grafos que se explicaran en el desarrollo del mismo.
+
+se ha revisado que tan afectados han sido los distintos paises por incidentes en el 2017 dentro de la base de datos en la que se trabajo, para ver que tan afectados han sido los mismos, esto se puede presenciar en la siguiente gráfica donde se muestra que mientras más rojo se torne un país ha tenido mayor cantidad de incidentes, y los que estan en blanco no se ha podido obtener mayor información de reportes pero de acuerdo 
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
