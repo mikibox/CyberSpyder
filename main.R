@@ -81,26 +81,36 @@ process_dates <- function(datafinal, dataframe, datecolumn, dateformat, datatype
 }
 
 # TODO explore the datasets
-spyder.main <- data.frame(row.names = c('TYPE','YEAR', 'MONTH', 'DAY', 'julianday'))
-spyder.main <- process_dates(spyder.main, breaches, "BreachDate", "%Y-%m-%d", "breaches")
-spyder.main <- process_dates(spyder.main, attacks2018, "Date", "%d/%m/%Y", "attacks")
-spyder.main <- process_dates(spyder.main, attacks2017, "Date", "%d/%m/%Y", "attacks")
-spyder.main <- process_dates(spyder.main, cves, "published.date", "%d/%m/%Y", "cves")
-spyder.main <- drop_na(spyder.main)
 
-# group by month and year
-spyder.totals <- spyder.main %>% group_by(TYPE) %>%
-  summarise(TOTAL = sum(!is.na(TYPE))) %>% rename(input_type = TYPE, input_total = TOTAL)
+get_spyder_df <- function(){
+  spyder.main <- data.frame(row.names = c('TYPE','YEAR', 'MONTH', 'DAY', 'julianday'))
+  spyder.main <- process_dates(spyder.main, breaches, "BreachDate", "%Y-%m-%d", "breaches")
+  spyder.main <- process_dates(spyder.main, attacks2018, "Date", "%d/%m/%Y", "attacks")
+  spyder.main <- process_dates(spyder.main, attacks2017, "Date", "%d/%m/%Y", "attacks")
+  spyder.main <- process_dates(spyder.main, cves, "published.date", "%d/%m/%Y", "cves")
+  spyder.main <- drop_na(spyder.main)
+  
+  # get totals
+  spyder.totals <- spyder.main %>% group_by(TYPE) %>%
+    summarise(TOTAL = sum(!is.na(TYPE))) %>% rename(input_type = TYPE, input_total = TOTAL)
+  
+  # group by month
+  spyder.bymonth <- spyder.main %>% group_by(TYPE, MONTH) %>% 
+    summarise(COUNT = sum(!is.na(TYPE)),
+              PER = (COUNT / spyder.totals$input_total[spyder.totals$input_type == TYPE][1])*100)
+  
+  # spread month
+  spyder.spreadmonth <- spread(spyder.bymonth[c("TYPE","MONTH","PER")], TYPE, PER)
+  
+  # group by year
+  spyder.byyear <- spyder.main %>% group_by(TYPE,MONTH, YEAR) %>% 
+    summarise(COUNT = sum(!is.na(MONTH)))
+  
+  #return
+  spyder
+}
 
-spyder.bymonth <- spyder.main %>% group_by(TYPE, MONTH) %>% 
-  summarise(COUNT = sum(!is.na(TYPE)),
-            PER = (COUNT / spyder.totals$input_total[spyder.totals$input_type == TYPE][1])*100)
-
-spyder.spreadmonth <- spread(spyder.bymonth[c("TYPE","MONTH","PER")], TYPE, PER)
-
-spyder.byyear <- spyder.main %>% group_by(TYPE,MONTH, YEAR) %>% 
-  summarise(COUNT = sum(!is.na(MONTH)))
-
+spyder <- get_spyder_df()
 
 
 ##########################################################################
@@ -119,7 +129,6 @@ spyder.getTotals <- function(custom_filter){
 }
 
 spyder.plots.AttacksCvesByYear <- function(myYear){
-  myYear <- c(2017)
   tmptotals <- spyder.getTotals(myYear)
   tmpdf <- spyder.main %>%
     filter(YEAR %in% myYear) %>%
@@ -135,9 +144,8 @@ spyder.plots.AttacksCvesByYear <- function(myYear){
     layout(title = "Attacks vs. CVEs 2017",
            xaxis = list(title = "Months"),
            yaxis = list (title = "Percentage (%)"))
-  
-  p<-add_trace(p, x= ~month, y = ~attacks, name = 'attacks', line = list(color = 'rgb(22,255,13)', width = 4))
-  p<-add_trace(p, x= ~month, y = ~cves, name = 'cves', line = list(color = 'rgb(0,148,255)', width = 4))
+  p<-add_lines(p, x= ~month, y = ~attacks, name = 'attacks', line = list(color = 'rgb(22,255,13)', width = 4))
+  p<-add_lines(p, x= ~month, y = ~cves, name = 'cves', line = list(color = 'rgb(0,148,255)', width = 4))
   p
 }
 
