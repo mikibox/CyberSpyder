@@ -96,22 +96,6 @@ get_spyder_df <- function(){
 
 spyder.main <- get_spyder_df()
 
-# get totals
-spyder.totals <- spyder.main %>% group_by(TYPE) %>%
-  summarise(TOTAL = sum(!is.na(TYPE))) %>% rename(input_type = TYPE, input_total = TOTAL)
-
-# group by month
-spyder.bymonth <- spyder.main %>% group_by(TYPE, MONTH) %>% 
-  summarise(COUNT = sum(!is.na(TYPE)),
-            PER = (COUNT / spyder.totals$input_total[spyder.totals$input_type == TYPE][1])*100)
-
-# spread month
-spyder.spreadmonth <- spread(spyder.bymonth[c("TYPE","MONTH","PER")], TYPE, PER)
-
-# group by year
-spyder.byyear <- spyder.main %>% group_by(TYPE,MONTH, YEAR) %>% 
-  summarise(COUNT = sum(!is.na(MONTH)))
-
 
 
 ##########################################################################
@@ -156,16 +140,54 @@ spyder.plots.ByYear(c(2012, 2013,2014, 2015, 2016, 2017))
 spyder.plots.ByYear(c(2017))
 
 
-# plot the data using ggplot2 and pipes
-spyder.byyear %>%
-  na.omit() %>%
-  filter(YEAR>2000) %>%
-  ggplot(aes(x = MONTH, y = COUNT)) +
-  geom_bar(stat = "identity", fill = "darkorchid4") +
-  facet_wrap( ~ TYPE ) +
-  labs(title = "Precipitation - Boulder, Colorado",
-       subtitle = "Use facets to plot by a variable - year in this case",
-       y = "Daily precipitation (inches)",
-       x = "Date") + theme_bw(base_size = 15)
+# Box plot for yearly analysis of month recurrency
+spyder.plots.BoxPlot <- function(myType, myYears){
+  # group by year
+  tmpdf <- spyder.main %>% 
+    filter(TYPE == myType, YEAR %in% myYears)%>% 
+    group_by(TYPE,MONTH, YEAR) %>% 
+    summarise(COUNT = sum(!is.na(MONTH)))
+  
+  ggplot(tmpdf, aes(x=as.factor(MONTH), y=COUNT)) + 
+    geom_boxplot(
+      
+      # custom boxes
+      color="blue",
+      fill="blue",
+      alpha=0.2,
+      
+      # Notch?
+      notch=FALSE,
+      notchwidth = 0.9,
+      
+      # custom outliers
+      outlier.colour="red",
+      outlier.fill="red",
+      outlier.size=3
+      
+    ) +
+    ggtitle(paste(myType,"counts through", paste(toString(myYears)))) +
+    xlab("Months") + ylab("Count") +
+    scale_x_discrete(labels=month.abb)
+}
+
+# Example boxplot (Daniel y Caro!)
+spyder.plots.BoxPlot("breaches", c(2014,2015,2016)) 
+spyder.plots.BoxPlot("cves", c(2014,2015,2016)) 
+
+
+
+
+# # plot the data using ggplot2 and pipes
+# spyder.byyear %>%
+#   na.omit() %>%
+#   filter(YEAR>2000) %>%
+#   ggplot(aes(x = MONTH, y = COUNT)) +
+#   geom_bar(stat = "identity", fill = "darkorchid4") +
+#   facet_wrap( ~ TYPE ) +
+#   labs(title = "Precipitation - Boulder, Colorado",
+#        subtitle = "Use facets to plot by a variable - year in this case",
+#        y = "Daily precipitation (inches)",
+#        x = "Date") + theme_bw(base_size = 15)
 
 
