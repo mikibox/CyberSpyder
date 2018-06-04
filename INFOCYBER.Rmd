@@ -19,7 +19,6 @@ Es inverosímil creer que un ataque se llevara a cabo en un lugar y hora exacta 
 
 En la actualidad, gracias a varias organizaciones se preocupan por recoger datos y publicarlos, podemos ver una tendencia, no solo en cuanto a ataques informáticos sino también a cve´s (common vulnerabilities and exposures) y breaches, esto lo han hecho a través de los años y nos proporcionan datos que pueden ser de mucha utilidad para determinar cierto patrón que utilizan los hackers para atacar.
 
-## Desarrollo 
 
 Para la elaboración de este documento se han tomado bases de datos de diferentes páginas web, a priori se ha obtenido información de cve´s, breaches e incidentes que se han reportado en el transcurso de los años, en diferentes fuentes de información, esto ha ayudado a realizar los grafos que se explicaran en el desarrollo del mismo.
 
@@ -75,6 +74,8 @@ sPDF <- joinCountryData2Map(dF = laTabla,
 ```{r  echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
 mapCountryData(sPDF, nameColumnToPlot = "Incidentes")
 ```
+
+## Desarrollo 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, error=FALSE, results='hide'}
 ##########################################################################
@@ -248,6 +249,8 @@ spyder.plots.BoxPlot <- function(myType, myYears){
 
 ```
 
+
+## RESULTADOS
 
 ```{r  echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
 spyder.plots.ByYear(c(2012, 2013,2014, 2015, 2016, 2017))
