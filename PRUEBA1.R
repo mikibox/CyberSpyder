@@ -43,13 +43,17 @@ for (i in 1:length(geo2017.csv$Country)) {
 # AGREGAR DATOS AL PAQUETE rworldmap 
 t1<-table(geo2017.csv$Country)
 laTabla = data.frame(t1)
+if (laTabla$Var1 >= "/n") {
+  
+}
+
 laTabla$Incidentes<-laTabla$Freq
 sPDF <- joinCountryData2Map(dF = laTabla,
                             joinCode = "ISO2",
                             nameJoinColumn = "Var1",
                             verbose = T)
 # plot the spatialDataFrame
-mapCountryData(sPDF, nameColumnToPlot = "Incidentes")
+spydermap<- mapCountryData(sPDF, nameColumnToPlot = "Incidentes")
 
 
 
