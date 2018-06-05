@@ -251,7 +251,7 @@ spyder.getTotals <- function(custom_filter){
     group_by(TYPE) %>%
     summarise(TOTAL = sum(!is.na(TYPE))) %>% rename(input_type = TYPE, input_total = TOTAL)
 }
-
+tituloplot<-""
 spyder.plots.ByYear <- function(myYear){
   tmptotals <- spyder.getTotals(myYear)
   tmpdf <- spyder.main %>%
@@ -265,7 +265,7 @@ spyder.plots.ByYear <- function(myYear){
   tmpdf$month <- months
   tmpdf$month <- factor(tmpdf$month, levels = tmpdf[["month"]])
   p <- plot_ly(tmpdf,  mode = 'lines') %>%
-    layout(title = "Attacks vs. CVEs 2017",
+    layout(title = tituloplot,
            xaxis = list(title = "Months"),
            yaxis = list (title = "Percentage (%)"))
   if("attacks" %in% colnames(tmpdf)) p<-add_lines(p, x= ~month, y = ~attacks, name = 'attacks', line = list(color = 'rgb(22,255,13)', width = 4))
@@ -316,13 +316,23 @@ spyder.plots.BoxPlot <- function(myType, myYears){
 
 ## Resultados
 
-En base al tratamiento hecho de los datos obtenidos decidimos generar algunas gráficas que nos aporten un valor agregado para la elaboración de conlusiones finales respecto al objetivo planteado:
+En base al tratamiento hecho de los datos obtenidos decidimos generar algunas gráficas que nos aporten un valor agregado para la elaboración de conlusiones finales respecto al objetivo planteado.
+
+Como podemos observar de acuerdo a la base de datos obtenida los primeros resultados arrojan una comprativa entre atacks, cves y breaches de acuerdo al porcentaje que se ha obtenido durante un periodo que consta de los 12 meses del año desde el año 2012 al 2017, tenemos una tendencia a que las 3 se incrementen en enero, a inicios del año, con ello podemos tomar en cuenta que enero es un mes donde existe mucho movimiento respecto a estas variables 
 
 ```{r  echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+tituloplot<-"Attacks - CVEs - Breaches"
 spyder.plots.ByYear(c(2012, 2013,2014, 2015, 2016, 2017))
 ```
 
+
+El año 2017, el ultimo año completo a la fecha, nos a arrojado la grafica siguiente, donde podemos observar que no hay una tendencia especifica para un ataque pero si que hay un incremento en meses del año esperado, como lo son vacaciones de verano donde se ve que en meses de julio un incremento tanto de cves como de ataques, diciembre y enero de igual manera son meses a tener en cuenta ya que son los meses donde más flujo de dinero se mueve por festividades como navidad y año nuevo, donde si se refleja un incremento de ataques pero al ser meses laboralmente no muy regulares por las festividades se ve un decremento en el porcentaje de los cves.
+
+Por ultimo en meses de marzo y abril hay otro feriado que hay que tener en consideración y es semana santa donde tambien se muestra un incremento de ataques mientras que cves despunta anormamente y puede darse a una tendencia exclusiva de ese año.
+
+
 ```{r  echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+tituloplot<-"Attacks vs. CVEs 2017"
 spyder.plots.ByYear(c(2017))
 ```
 
