@@ -1,0 +1,354 @@
+---
+title: "Informe ¿En que época del año se es más vulnerable a un ataque informático?"
+author: "Daniel Malvarez, Miquel Fairman, Carolina Recalde"
+date: "08 de junio 2018"
+output:
+  html_document:
+    toc: yes
+  html_notebook:
+    highlight: pygments
+    number_sections: yes
+    theme: spacelab
+    toc: yes
+    toc_float: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Introducción
+
+Un ataque informático es uno de los eventos mas preocupantes que puede surgir en un entorno empresarial, por ello el área de seguridad de una empresa debe estar al corriente tanto de los posibles parches como incidentes se han suscitado en otras compañías o servicios atacados.
+
+Es inverosímil creer que un ataque se llevara a cabo en un lugar y hora exacta de acuerdo a un estándar predeterminado, pero si se puede tener una estadística que muestre cuando estar mas al pendiente de cualquier posible incidente.
+
+En la actualidad, gracias a varias organizaciones se preocupan por recoger datos y publicarlos, podemos ver una tendencia, no solo en cuanto a ataques informáticos sino también a cve´s (common vulnerabilities and exposures) y breaches, esto lo han hecho a través de los años y nos proporcionan datos que pueden ser de mucha utilidad para determinar cierto patrón que utilizan los hackers para atacar.
+
+
+Para la elaboración de este documento se han tomado bases de datos de diferentes páginas web, a priori se ha obtenido información de cve´s, breaches e incidentes que se han reportado en el transcurso de los años, en diferentes fuentes de información, esto ha ayudado a realizar los grafos que se explicaran en el desarrollo del mismo.
+
+## Desarrollo 
+
+
+Primero se ha revisado que tan afectados han sido los distintos paises por incidentes en el 2017 dentro de la base de datos en la que se trabajo, esto se puede presenciar en la siguiente gráfica donde se muestra que mientras más rojo se torne un país, ha tenido mayor cantidad de incidentes y mientras más tienda a amarillo el mismo es porque menos incidentes se han dado, como se menciono esta es una base de datos pública, existen otras que son privadas y pueden tener variables en los datos presentados, cabe mencionar que esta base de datos se ha realizado tan solo con los incidentes proporcionados por las personas afectadas y que puede haber muchos más con los que no cuenta, pero esto muestra resultados de la magnitu de incidentes que hoy en día se suscitan.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, error=FALSE, results='hide'}
+
+library(rworldmap)
+# Hackmagedon csvnetse
+geo2017.csv <- read.csv("https://docs.google.com/spreadsheets/d/14-PLnKlHDvL4eZQFuf0qy2fTA-2OuVsRk_t25PrX4eY/export?format=csv",sep = ",")
+i<-1
+j<-1
+a<-0
+
+#Valores de las tablas antes de ser modificados 
+t<-table(geo2017.csv$Country)
+tablecountry<-names(table(geo2017.csv$Country))
+
+#Valor logico de variables que no se encuentran en el mapa
+log<-geo2017.csv$Country[1:length(geo2017.csv$Country)] 
+
+for (j in 1:length(geo2017.csv$Country)) {
+  if (log[j] == tablecountry[66]) {
+    geo2017.csv$Country[j]<-"GB"
+  }
+}
+
+#Parsear datos eliminando no deseados
+for (i in 1:length(geo2017.csv$Country)) {
+  if (log[i] == tablecountry[1] | log[i] == tablecountry[41]) {
+    geo2017.csv<-geo2017.csv[-(i-a),]
+    a<-a+1
+    
+  }
+
+}
+
+# AGREGAR DATOS AL PAQUETE rworldmap 
+t1<-table(geo2017.csv$Country)
+laTabla = data.frame(t1)
+
+laTabla$Incidentes<-laTabla$Freq
+sPDF <- joinCountryData2Map(dF = laTabla,
+                            joinCode = "ISO2",
+                            nameJoinColumn = "Var1",
+                            verbose = T)
+# plot the spatialDataFrame
+
+
+```
+
+
+```{r  echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+mapCountryData(sPDF, nameColumnToPlot = "Incidentes")
+```
+
+
+
+Para el análisis realizado se obtuvieron datos de distintas fuentes, entre ellas:
+  -Hackmagedon: nos brindó datos relacionados con ataques informáticos ocurridos en los últimos años. Enlace
+  -BeautifulInfo: es un sitio web del cual pudimos conseguir datos históricos de Breaches publicados. Enlace
+  -Librería "Net.Security"" es una librería que nos fue introducida en clases de la cuál pudimos obtener datos de cves históricos. Enlace
+
+
+
+En la fase de exploración de proyecto realizamos un tratamiento especial sobre los campos tipo fecha ya que consideramos que esta información es necesario disponerla de la manera mas flexible para encontrar resultados de acuerdo a la pregunta planteada al inicio del trabajo. Es por eso que se creó una función que nos permita a partir de un dataframe con un campo tipo date obtener otro dataframe con las filas del primero añadidas y con 5 columnas adicionales que indiquen AÑO,MES,DIA (del mes),DIA JULIANO (del año) y Categoría. Esta función nos permite tomar distintas fuentes de datos y unificarlas de acuerdo al campo fecha que todos los eventos poseen en común, manteniendo siempre la identificación de la fuente a través del campo "Categoría" agregado.
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, error=FALSE, results='hide'}
+#knit('InformeCaro.rmd', tangle=TRUE)
+#source('main.R')
+##########################################################################
+#
+# Intalling libraries
+#
+##########################################################################
+
+necessaryPackages <- c("bindrcpp", "plotly", "ggplot2", "dplyr", "lubridate", "jsonlite", "tidyr", "tidyverse")
+
+#' Install all necessary packages which are not yet installed
+#' @param packages a list of string
+#' @return  Print of the result of packages installation
+#' installPackages(c("plotly"))
+installPackages <- function(packages){
+  list.of.packages <- packages
+  new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+  if(length(new.packages)) install.packages(new.packages)
+}
+
+loadPackages <- function(){
+  library(plotly)
+  library(ggplot2)
+  library(dplyr)
+  library(lubridate)
+  library(jsonlite)
+  library(tidyr)
+}
+
+# installPackages(necessaryPackages)
+loadPackages()
+
+##########################################################################
+#
+# READING DATASETS
+#
+##########################################################################
+options(stringsAsFactors = FALSE)
+if (!dir.exists("data")){
+  dir.create("data")
+}
+
+if (!file.exists("data/hackmaggedon2017.csv")){
+  print("Missing data files")
+}
+if (!file.exists("data/hackmaggedon2018.csv")){
+  print("Missing data files")
+}
+
+# breaches json
+breaches <- fromJSON("https://query.data.world/s/hlrbfrljlgetudr6zbzv4cdv7446qb")
+
+
+# Hackmagedon csv
+attacks2017 <- read.csv(file = "data/hackmaggedon2017.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
+attacks2018 <- read.csv(file = "data/hackmaggedon2018.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
+
+# CVEs rda
+if (!file.exists("data/sysdata.rda")){
+  fileUrl <- "https://github.com/r-net-tools/security.datasets/raw/master/net.security/sysdata.rda"
+  download.file(url = fileUrl, destfile = "data/sysdata.rda")
+}
+load("data/sysdata.rda")
+cves <- netsec.data$datasets$cves
+# making a small sample of the cves
+# cves <- cves[1:100,]
+
+
+##########################################################################
+#
+# EXPLORING & TRANSFORMING DATASETS
+#
+##########################################################################
+
+#' Receives a dataframe with a date type column and split it adding 4 more
+#' columns YEAR,MONTH,DATE and JulianDay according to @dateformat. Adds also
+#' another column with text @datatype for row labeling.
+#' Finally adds this dataframe rows to @datafinal dataframe which is returned.
+
+process_dates <- function(datafinal, dataframe, datecolumn, dateformat, datatype){
+  
+  dataframe[,datecolumn] <- as.Date(dataframe[,datecolumn], dateformat)
+  dataframe$DATE <- dataframe[,datecolumn]
+  dataframe <- separate(dataframe, DATE, c('YEAR', 'MONTH', 'DAY'))
+  dataframe$julianday <- yday(dataframe[,datecolumn]) 
+  dfresult <- select(dataframe, c('YEAR', 'MONTH', 'DAY', 'julianday'))
+  dfresult$TYPE <- datatype
+  datafinal <- bind_rows(datafinal,dfresult)
+}
+
+# TODO explore the datasets
+# Returns project's main dataframe with all datasets configured for the project. This maindataframe normalizes all datasets rows' counts of different types.
+
+get_spyder_df <- function(){
+  spyder.main <- data.frame(row.names = c('TYPE','YEAR', 'MONTH', 'DAY', 'julianday'))
+  spyder.main <- process_dates(spyder.main, breaches, "BreachDate", "%Y-%m-%d", "breaches")
+  spyder.main <- process_dates(spyder.main, attacks2018, "Date", "%d/%m/%Y", "attacks")
+  spyder.main <- process_dates(spyder.main, attacks2017, "Date", "%d/%m/%Y", "attacks")
+  spyder.main <- process_dates(spyder.main, cves, "published.date", "%d/%m/%Y", "cves")
+  spyder.main <- drop_na(spyder.main)
+  
+  #return
+  spyder.main
+}
+
+spyder.main <- get_spyder_df()
+
+spyder.getTotals <- function(custom_filter){
+  df <- spyder.main %>% 
+    filter(YEAR %in% custom_filter) %>%
+    group_by(TYPE) %>%
+    summarise(TOTAL = sum(!is.na(TYPE))) %>% rename(input_type = TYPE, input_total = TOTAL)
+}
+tmptotals <- spyder.getTotals(c(2012, 2013,2014, 2015, 2016, 2017))
+
+```
+
+
+
+Como parte del tratamiento de datos decidimos que sería conveniente hacer un conteo unificado de los eventos de las distintas fuentes de datos, es por eso que aprovechando nuestro dataframe principal obtuvimos información como por ejemplo cantidad de ataques, cves y breaches publicados en el período 2012-2017:
+```{r  echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+knitr::kable(head(tmptotals), col.names = c("Categoria","Total"),format = "markdown",caption = "Atacks, Cves and Breackes 2012-2017")
+```
+Como podemos observar, la cantidad de observaciones entre distintas categorías son muy dispares, Es por esto que decidimos normalizar los datos para obtener información que realmente sea de valor. Entonces decidimos realizar otra vista que nos permita observar para cada categoría el número de ocurrencias por cada mes del año y luego con esto lograr obtener porcentajes de ocurrencias por mes respecto al total de cada categoría. Obteniendo una tabla como la siguiente:
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, error=FALSE, results='hide'}
+  tmpdf <- spyder.main %>%
+    filter(YEAR %in% c(2012, 2013,2014, 2015, 2016, 2017)) %>%
+    group_by(TYPE, MONTH) %>% 
+    summarise(COUNT = sum(!is.na(TYPE)),
+              PER = (COUNT / tmptotals$input_total[tmptotals$input_type == TYPE][1])*100)
+  tmpdf <- spread(tmpdf[c("TYPE","MONTH","PER")],TYPE, PER)
+  sum(tmpdf$attacks)
+```
+```{r  echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+knitr::kable(tmpdf,col.names = c("Mes","% Ataques","% Breaches","% CVEs"))
+```
+
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, error=FALSE, results='hide'}
+##########################################################################
+#
+# VISUALIZING DATASETS
+#
+##########################################################################
+# Plot 2017 and 2018 attacks and cves
+months <- c('January', 'February', 'March', 'April', 'May', 'June', 'July','August', 'September', 'October', 'November', 'December')
+# Returns mains dataframe summarized in number of events per category filtered by year/years as parameter
+spyder.getTotals <- function(custom_filter){
+  df <- spyder.main %>% 
+    filter(YEAR %in% custom_filter) %>%
+    group_by(TYPE) %>%
+    summarise(TOTAL = sum(!is.na(TYPE))) %>% rename(input_type = TYPE, input_total = TOTAL)
+}
+tituloplot <- ""
+spyder.plots.ByYear <- function(myYear){
+  tmptotals <- spyder.getTotals(myYear)
+  tmpdf <- spyder.main %>%
+    filter(YEAR %in% myYear) %>%
+    group_by(TYPE, MONTH) %>% 
+    summarise(COUNT = sum(!is.na(TYPE)),
+              PER = (COUNT / tmptotals$input_total[tmptotals$input_type == TYPE][1])*100)
+  tmpdf <- spread(tmpdf[c("TYPE","MONTH","PER")],TYPE, PER)
+  sum(tmpdf$attacks)
+  
+  tmpdf$month <- months
+  tmpdf$month <- factor(tmpdf$month, levels = tmpdf[["month"]])
+  p <- plot_ly(tmpdf,  mode = 'lines') %>%
+    layout(title = tituloplot,
+           xaxis = list(title = "Months"),
+           yaxis = list (title = "Percentage (%)"))
+  if("attacks" %in% colnames(tmpdf)) p<-add_lines(p, x= ~month, y = ~attacks, name = 'attacks', line = list(color = 'rgb(22,255,13)', width = 4))
+  if("cves" %in% colnames(tmpdf)) p<-add_lines(p, x= ~month, y = ~cves, name = 'cves', line = list(color = 'rgb(0,148,255)', width = 4))
+  if("breaches" %in% colnames(tmpdf)) p<-add_lines(p, x= ~month, y = ~breaches, name = 'breaches', line = list(color = 'rgb(255,56,0)', width = 4))
+  p
+}
+
+
+# Box plot for yearly analysis of month recurrency
+spyder.plots.BoxPlot <- function(myType, myYears){
+  # group by year
+  tmpdf <- spyder.main %>% 
+    filter(TYPE == myType, YEAR %in% myYears)%>% 
+    group_by(TYPE,MONTH, YEAR) %>% 
+    summarise(COUNT = sum(!is.na(MONTH)))
+  
+  ggplot(tmpdf, aes(x=as.factor(MONTH), y=COUNT)) + 
+    geom_boxplot(
+      
+      # custom boxes
+      color="blue",
+      fill="blue",
+      alpha=0.2,
+      
+      # Notch?
+      notch=FALSE,
+      notchwidth = 0.9,
+      
+      # custom outliers
+      outlier.colour="red",
+      outlier.fill="red",
+      outlier.size=3
+      
+    ) +
+    ggtitle(paste(myType,"counts through", paste(toString(myYears)))) +
+    xlab("Months") + ylab("Count") +
+    scale_x_discrete(labels=month.abb)
+}
+
+```
+
+
+
+
+
+
+
+## Resultados
+
+En base al tratamiento hecho de los datos obtenidos decidimos generar algunas gráficas que nos aporten un valor agregado para la elaboración de conlusiones finales respecto al objetivo planteado.
+
+Como podemos observar de acuerdo a la base de datos obtenida los primeros resultados arrojan una comprativa entre atacks, cves y breaches de acuerdo al porcentaje que se ha obtenido durante un periodo que consta de los 12 meses del año desde el año 2012 al 2017, tenemos una tendencia a que las 3 se incrementen en enero, a inicios del año, con ello podemos tomar en cuenta que enero es un mes donde existe mucho movimiento respecto a estas variables 
+
+```{r  echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+tituloplot<-"Attacks - CVEs - Breaches"
+spyder.plots.ByYear(c(2012, 2013,2014, 2015, 2016, 2017))
+```
+
+
+El año 2017, el ultimo año completo a la fecha, nos a arrojado la gráfica siguiente, donde podemos observar que no hay una tendencia específica para un ataque pero si que hay un incremento en meses del año esperado, como lo son vacaciones de verano donde se ve que en meses de julio un incremento tanto de cves como de ataques, diciembre y enero de igual manera son meses a tener en cuenta ya que son los meses donde más flujo de dinero se mueve por festividades como navidad y año nuevo, donde si se refleja un incremento de ataques pero al ser meses laboralmente no muy regulares por las festividades se ve un decremento en el porcentaje de los cves.
+
+Por ultimo en meses de marzo y abril hay otro feriado que hay que tener en consideración y es semana santa donde tambien se muestra un incremento de ataques mientras que cves despunta anormamente y puede darse a una tendencia exclusiva de ese año.
+
+
+```{r  echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+tituloplot<-"Attacks vs. CVEs 2017"
+spyder.plots.ByYear(c(2017))
+```
+
+
+```{r  echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+spyder.plots.BoxPlot("cves", c(2014,2015,2016)) 
+```
+Esta gráfica de cajas nos permite observar la cantidad de CVEs publicados en cada mes del año del período 2014-2016. La idea de la misma fue conocer la fiabilidad de los datos de todos los años en conjunto, esta fiabilidad la podemos ver en mayor medida mientras las cajas sean más pequeñas, lo cual indica una menor desviación de los datos haciendo que la media (línea remarcada en la caja) sea más representativa de los datos de un mes particular.
+ Lo que podemos destacar es que tenemos picos de publicaciones en los meses de Enero, Abril,Julio y Octubre. Esto podría indicarnos un patrón de ocurrencia ataques con mayor frecuencia cada 3 meses. Además , cabe destacar que la fecha utilizada en cuestión es la fecha de publicación de cada cve por lo que podemos suponer que el ataque asociado ha ocurrido antes de su publicación. Una conclusión viable es que los ataques ocurran en períodos de cambio de estación coincidiendo Diciembre, Marzo,  Junio, Setiembre como los meses anteriores a los indicados primero y esto podría deberse a que en estas fechas hay mayor interacción de personas y empresas en la web debido a períodos festivos o cambios de temporada.
+
+
+
+
+
+##Conclusión
+
+Como conclusión final en base al análisis realizado podemos inducir que una empresa o sistema, en caso de recibir un ataque informático, el mismo ocurrirá con una mayor probabilidad en períodos festivos internacionales. Para ser más específico consideramos que el período Noviembre-Enero es un período al cuál una persona responsable de la seguridad informática de una empresa o sistema debería prestar aún más atención de lo normal ya que es un período donde la cantidad de ataques y publicaciones de breaches históricamente han sido más elevadas sobre el resto del año.
+
+Además nos gustaría añadir una conclusión final relacionada a la práctica realizada. La misma nos ha permitido llevar adelante los conceptos aprendidos en clase. A pesar de ser nuevos en el uso del lenguaje R y gestión de repositorio con GIT pudimos desenvolvernos y solucionar inconvenientes que fueron surgiendo y todo nos ha brindado un aprendizaje. Finalmente cabe destacar el aporte generado a nivel de grupo ya que el trabajo requirió el aporte de cada uno y la comunicación entre los miembros y entre los mismos hacia los profesores, tarea que se realiza en el día a día como trabajadores profesionales.
